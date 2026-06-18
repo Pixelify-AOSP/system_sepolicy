@@ -1821,3 +1821,23 @@ neverallow system_server self:global_capability_class_set sys_module;
 neverallow { domain -system_server -init } appsearch_data_file:file { open read write };
 
 neverallow system_server *:process ptrace;
+
+# cpuset / cpuctl cgroup read-write
+allow system_server cgroup:file { open read write getattr setattr };
+allow system_server cgroup_v2:file { open read write getattr };
+allow system_server cgroup:dir { open read search };
+allow system_server cgroup_v2:dir { open read search };
+
+# /proc/PID/cmdline read — SystemUI PID discovery
+allow system_server proc_pid_max:file { open read getattr };
+
+# RT scheduling (SCHED_RR)
+allow system_server self:capability sys_nice;
+allow system_server self:process setsched;
+allow system_server system_server:process setsched;
+
+# SCHED_RR + per-thread uclamp on SystemUI (system_app) threads via
+# /proc/<tid>/sched and /proc/<tid>/uclamp_* (uclamp is a no-op if the
+# kernel doesn't expose those procfs nodes, but the rule is harmless either way)
+allow system_server system_app:process setsched;
+allow system_server system_app:file { open read write getattr };
